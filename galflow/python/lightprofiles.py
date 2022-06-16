@@ -9,7 +9,7 @@ import tensorflow as tf
 import math
 from tensorflow.python.ops.gen_array_ops import ones_like
 
-from tensorflow.python.types.core import Value
+#from tensorflow.python.types.core import Value
 
 __all__ = ["gaussian", "sersic", "deVaucouleurs", "exponential"]
 
