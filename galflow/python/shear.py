@@ -1,4 +1,4 @@
-# Functions computing shear related affine transformations
+#Functions computing shear related affine transformations
 # based on https://github.com/GalSim-developers/GalSim/blob/main/galsim/shear.py
 
 from __future__ import absolute_import
