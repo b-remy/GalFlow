@@ -19,8 +19,8 @@ from typing import Optional
 
 from six.moves import range, zip
 import tensorflow as tf
-from tensorflow_addons import image as tfa_image
-
+#from tensorflow_addons import image as tfa_image
+from tensorflow.contrib.resampler import resampler
 
 class ResamplingType(enum.Enum):
   NEAREST = 0
@@ -189,8 +189,8 @@ def sample(image,
       warp_y = tf.clip_by_value(warp_y, 0.0, height - 1.0)
       warp = tf.stack((warp_x, warp_y), axis=-1)
 
-    return tfa_image.resampler(image, warp)
-
+    #return tfa_image.resampler(image, warp)
+    return resampler(image, warp)
 
 def perspective_transform(
     image,

@@ -9,7 +9,7 @@ import tensorflow as tf
 import math
 from tensorflow.python.ops.gen_array_ops import ones_like
 
-from tensorflow.python.types.core import Value
+#from tensorflow.python.types.core import Value
 
 __all__ = ["gaussian", "sersic", "deVaucouleurs", "exponential"]
 
@@ -236,8 +236,8 @@ def sersic(n, half_light_radius=None, scale_radius=None, flux=None, trunc=None,
       flux = tf.ones(batch_size)
     else:  
       flux = tf.convert_to_tensor(flux, dtype=tf.float32)
-
     flux = sersic_flux_normalization(flux, trunc, r0, n, flux_untruncated)
+
 
     x, y = tf.meshgrid(tf.range(nx), tf.range(ny))
     x = tf.cast(x, tf.float32)
@@ -254,12 +254,15 @@ def sersic(n, half_light_radius=None, scale_radius=None, flux=None, trunc=None,
     trunc = tf.reshape(trunc, (batch_size, 1, 1))
 
     sersic = tf.exp(-tf.math.pow(z/r0, 1/n))  * scale  * scale
-
-    trunc = trunc * tf.cast(trunc>0., tf.float32) + tf.math.sqrt(nx*nx*1.+ny*ny*1.) * scale * tf.cast(trunc==0., tf.float32)
-    sersic = tf.cast((z<trunc), tf.float32) * sersic
-
-    sersic = sersic_normalization(sersic, n, r0)
     
+    zero_trunc = tf.cast(tf.math.equal(trunc, 0.), tf.float32)
+    
+    trunc = trunc * (1. - zero_trunc) + tf.math.sqrt(nx*nx*1.+ny*ny*1.) * scale * zero_trunc
+    
+    sersic = tf.cast((z<trunc), tf.float32) * sersic
+    
+    sersic = sersic_normalization(sersic, n, r0)
+
     sersic *= flux
     
     return sersic
@@ -364,7 +367,8 @@ def deVaucouleurs(half_light_radius=None, scale_radius=None, flux=None, trunc=No
 
     trunc = trunc * tf.cast(trunc>0., tf.float32) + tf.math.sqrt(nx*nx*1.+ny*ny*1.) * scale * tf.cast(trunc==0., tf.float32)
     sersic = tf.cast((z<trunc), tf.float32) * sersic
-
+    
+    
     sersic = sersic_normalization(sersic, n, r0)
     
     sersic *= flux
@@ -386,9 +390,12 @@ def sersic_flux_normalization(flux, trunc, r0, n, flux_untruncated):
   n = n * (1-mask) + tf.ones_like(n) * mask
   flux_fraction = integratedflux(trunc, r0, n)
   normalize = tf.cast(tf.math.logical_and(trunc > 0., tf.math.logical_not(flux_untruncated)), tf.float32)
+  
   flux = flux * (1-mask) + tf.ones_like(flux)*mask
   flux = flux * (1-normalize) + flux / flux_fraction * normalize
+  
   return flux
+
 
 
 def sersic_normalization(sersic, n, r0):
@@ -415,7 +422,9 @@ def integratedflux(trunc, r0, n):
   """
   r = trunc / r0
   z = tf.math.pow(r, 1./n)
-  return tf.math.igamma(2.*n, z) * tf.cast(trunc>0., tf.float32) + tf.ones(n.shape[0]) *  tf.cast(trunc==0., tf.float32)
+  zero_trunc = tf.cast(tf.math.equal(trunc, 0.), tf.float32)
+  # return tf.math.igamma(2.*n, z) * tf.cast(trunc>0., tf.float32) + tf.ones(n.shape[0]) *  tf.cast(trunc==0., tf.float32)
+  return tf.math.igamma(2.*n, z) * (1.-zero_trunc) + tf.ones(n.shape[0]) *  zero_trunc
 
 def calculate_b(n):
   """
@@ -477,6 +486,7 @@ def calculate_b(n):
     return z
   
   return Broyden_solver(b2,b1)
+  # return b2
 
 def calculateHLRFactor(n, flux_fraction=0.):
   """Calculate the half-light-radius in units of the scale radius.
