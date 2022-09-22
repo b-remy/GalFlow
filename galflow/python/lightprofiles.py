@@ -237,7 +237,8 @@ def sersic(n, half_light_radius=None, scale_radius=None, flux=None, trunc=None,
     else:  
       flux = tf.convert_to_tensor(flux, dtype=tf.float32)
 
-    flux = sersic_flux_normalization(flux, trunc, r0, n, flux_untruncated)
+    # flux = sersic_flux_normalization(flux, trunc, r0, n, flux_untruncated)
+    flux = flux
 
     x, y = tf.meshgrid(tf.range(nx), tf.range(ny))
     x = tf.cast(x, tf.float32)
@@ -390,23 +391,23 @@ def sersic_flux_normalization(flux, trunc, r0, n, flux_untruncated):
   flux = flux * (1-normalize) + flux / flux_fraction * normalize
   return flux
 
-
 def sersic_normalization(sersic, n, r0):
   """Convenience function to normalize the sersic profile
   Need to account cases where n is big and tf.math.exp(tf.math.lgamma(n)) is inf
   """
-  check = tf.math.exp(tf.math.lgamma(2.*n))
-  isinf = tf.math.is_inf(check)
-  isr0 = r0==0.
-  mask = tf.cast(tf.math.logical_or(isinf, isr0), tf.float32)
-  n = n * (1.-mask) + tf.ones_like(n) * mask
-  r0 = r0 * (1.-mask) + tf.ones_like(r0) * mask
+  # check = tf.math.exp(tf.math.lgamma(2.*n))
+  # isinf = tf.math.is_inf(check)
+  # isr0 = r0==0.
+  # mask = tf.cast(tf.math.logical_or(isinf, isr0), tf.float32)
+  # n = n * (1.-mask) + tf.ones_like(n) * mask
+  # r0 = r0 * (1.-mask) + tf.ones_like(r0) * mask
   Z = 2 * math.pi * r0 * r0 * n * tf.math.exp(tf.math.lgamma(2.*n))
-  isZ = tf.cast(Z==0., tf.float32)
-  Z = Z * (1-isZ) + tf.ones_like(Z) * isZ
+  # isZ = tf.cast(Z==0., tf.float32)
+  # Z = Z * (1-isZ) + tf.ones_like(Z) * isZ
 
-  sersic = sersic/Z * (1-mask) + tf.zeros_like(sersic) * (mask)
-  sersic = sersic * (1-isZ) + tf.zeros_like(sersic) * isZ
+  # sersic = sersic/Z * (1-mask) + tf.zeros_like(sersic) * (mask)
+  # sersic = sersic * (1-isZ) + tf.zeros_like(sersic) * isZ
+  sersic = sersic / Z
   return sersic
 
 
